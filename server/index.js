@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const router = require('./router/index');
 const dotenv = require('dotenv');
+const errorMiddleware = require('./middlewares/error-middleware');
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
 app.use('/api/', router);
+app.use(errorMiddleware);
 
 mongoose.set('strictQuery', true);
 mongoose

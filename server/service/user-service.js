@@ -4,12 +4,15 @@ const uuid = require('uuid');
 const mailService = require('./mail-service');
 const tokenService = require('./token-service');
 const UserDto = require('../dtos/user-dto');
+const ApiError = require('../exceptions/api-errors');
 
 class UserService {
   async registration(email, password) {
     const candidate = await UserModel.findOne({ email });
     if (candidate) {
-      throw new Error(`Пользователь с почтовым ящиком ${email} ужу сушествует`);
+      throw ApiError.BadRequest(
+        `Пользователь с почтовым ящиком ${email} ужу сушествует`
+      );
     }
     const hashPassword = await bcrypt.hash(password, 3);
 
@@ -19,7 +22,8 @@ class UserService {
       password: hashPassword,
       activationLink,
     });
-    await mailService.sendActivationMail(
+    await mailService.sendEmail(
+      //'burinsky@ukr.net'
       email,
       `${process.env.API_URL}/api/activate/${activationLink}`
     );
@@ -32,6 +36,15 @@ class UserService {
       ...tokens,
       user: userDto,
     };
+  }
+
+  async activate(activationLink) {
+    const user = await UserModel.findOne({ activationLink });
+    if (!user) {
+      throw ApiError.BadRequest('Некоректаная ссылка активации');
+    }
+    user.isActivated = true;
+    await user.save();
   }
 }
 
